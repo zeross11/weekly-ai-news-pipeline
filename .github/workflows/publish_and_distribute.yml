@@ -1,0 +1,58 @@
+name: Medical Cyber News – Publish & Distribute
+on:
+  workflow_dispatch:
+    inputs:
+      post_url:
+        description: 'Published blog URL'
+        required: true
+        default: 'https://zerodaycyber.io/cybersecurity-for-healthcare/blog/'
+permissions:
+  contents: write
+concurrency:
+  group: weekly-news
+  cancel-in-progress: true
+env:
+  TEAMS_WEBHOOK_URL:  ${{ secrets.TEAMS_WEBHOOK_URL }}
+  HL_API_URL:         ${{ secrets.HL_API_URL }}
+  HL_API_KEY:         ${{ secrets.HL_API_KEY }}
+  HL_AUTOMATION_ID:   ${{ secrets.HL_AUTOMATION_ID }}
+  BOOKING_LINK:       ${{ secrets.BOOKING_LINK }}
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Skip if no changes
+        run: |
+          git diff --quiet rss.xml && echo 'No new content' && exit 0
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+      - name: Publish RSS
+        run: |
+          git config user.name 'actions[bot]'
+          git add rss.xml
+          git commit -m 'Publish weekly news' || echo 'No changes'
+          git push origin main
+      - name: Verify Live Post
+        run: |
+          status=$(curl -o /dev/null -s -w "%{http_code}" "${{ github.event.inputs.post_url }}")
+          if [ "$status" -ne 200 ]; then
+            echo "Post not live (HTTP $status)"; exit 1
+          fi
+      - name: Notify Teams
+        run: |
+          curl -X POST $TEAMS_WEBHOOK_URL -H 'Content-Type: application/json' \
+            -d '{"text":"✅ Published: ${{ github.event.inputs.post_url }}"}'
+      - name: Trigger HighLevel CRM Automation
+        run: |
+          curl -X POST $HL_API_URL/contacts \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $HL_API_KEY" \
+            -d '{"email":"engagement@zerodaycyber.io","customData":{"engagedWithContent":"Medical Cyber News","bookingLink":"'"$BOOKING_LINK"'"}}'
+          curl -X POST $HL_API_URL/automations/$HL_AUTOMATION_ID/execute \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $HL_API_KEY" \
+            -d '{"metadata":{"postUrl":"'"${{ github.event.inputs.post_url }}"'","bookingLink":"'"$BOOKING_LINK"'"}}'
