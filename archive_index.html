@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Archive - Medical Cyber News</title></head>
+<body>
+  <h1>Archive of Medical Cyber News</h1>
+  <ul id="post-list"></ul>
+  <script>
+    async function loadRSS() {
+      const res = await fetch('rss.xml');
+      const text = await res.text();
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, 'application/xml');
+      const items = xml.querySelectorAll('item');
+      const list = document.getElementById('post-list');
+      items.forEach(item => {
+        const title = item.querySelector('title').textContent;
+        const link  = item.querySelector('link').textContent;
+        const li    = document.createElement('li');
+        li.innerHTML = `<a href="${link}">${title}</a>`;
+        list.append(li);
+      });
+    }
+    loadRSS();
+  </script>
+</body>
+</html>
