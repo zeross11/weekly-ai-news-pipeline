@@ -1,0 +1,44 @@
+name: Weekly Medical Cyber News – Draft
+on:
+  schedule:
+    - cron: '0 13 * * 1'  # Mondays 06:00 PDT (13:00 UTC)
+permissions:
+  contents: write       # allow updating rss.xml
+  pull-requests: write  # allow creating draft PR
+concurrency:
+  group: weekly-news
+  cancel-in-progress: true
+env:
+  OPENAI_API_KEY:     ${{ secrets.OPENAI_API_KEY }}
+  NEWSAPI_KEY:        ${{ secrets.NEWSAPI_KEY }}
+  TEAMS_WEBHOOK_URL:  ${{ secrets.TEAMS_WEBHOOK_URL }}
+  MODEL_NAME:         ${{ secrets.MODEL_NAME }}
+  FALLBACK_THRESHOLD: ${{ secrets.FALLBACK_THRESHOLD }}
+  FALLBACK_MODEL:     ${{ secrets.FALLBACK_MODEL }}
+  DRAFT_PROMPT:       ${{ secrets.DRAFT_PROMPT }}
+  BLOG_BASE_URL:      ${{ secrets.BLOG_BASE_URL }}
+  JSON_LD_LOGO_URL:   ${{ secrets.JSON_LD_LOGO_URL }}
+  RSS_TITLE:          ${{ secrets.RSS_TITLE }}
+jobs:
+  build-draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Generate Draft
+        run: python generate.py
+      - name: Create Draft PR
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token:          ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'Draft: weekly medical cyber news'
+          branch:         draft/week-${{ github.run_id }}
+          base:           main
+          title:          '📝 Draft Medical Cyber News #${{ github.run_id }}'
+          body:           'Review this draft and add the featured image URL before merging.'
