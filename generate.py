@@ -19,8 +19,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(mess
 
 # Required config
 OPENAI_API_KEY    = os.getenv('OPENAI_API_KEY')
-TEAMS_WEBHOOK_URL = os.getenv('TEAMS_WEBHOOK_URL')
-MODEL_NAME        = os.getenv('MODEL_NAME', 'gpt-4o-mini')
+MODEL_NAME        = os.getenv('MODEL_NAME', 'gpt-4o')
 BLOG_BASE_URL     = os.getenv('BLOG_BASE_URL', 'https://zerodaycyber.io/cybersecurity-for-healthcare')
 LOGO_URL          = os.getenv('JSON_LD_LOGO_URL', f'{BLOG_BASE_URL}/logo.png')
 HL_API_URL        = os.getenv('HL_API_URL')
@@ -29,7 +28,7 @@ HL_AUTOMATION_ID  = os.getenv('HL_AUTOMATION_ID')
 BOOKING_LINK      = os.getenv('BOOKING_LINK')
 
 # Fail-fast
-for var in ['OPENAI_API_KEY','TEAMS_WEBHOOK_URL']:
+for var in ['OPENAI_API_KEY']:
     if not os.getenv(var):
         logging.error(f'Missing required env var: {var}')
         raise RuntimeError(f'Missing required env var: {var}')
@@ -68,16 +67,6 @@ def validate_rss(path='rss.xml'):
     import xmlschema
     xmlschema.XMLSchema11('https://www.w3.org/2005/Atom').validate(path)
     logging.info('RSS validation passed')
-
-# Teams notification
-def notify_teams(title, message):
-    if not TEAMS_WEBHOOK_URL:
-        return
-    payload = {'text': f"**{title}**\n{message}"}
-    try:
-        requests.post(TEAMS_WEBHOOK_URL, json=payload, timeout=5)
-    except Exception:
-        logging.error('Failed to send Teams notification')
 
 # Main pipeline
 def generate_and_publish():
