@@ -12,7 +12,6 @@ concurrency:
   group: weekly-news
   cancel-in-progress: true
 env:
-  TEAMS_WEBHOOK_URL:  ${{ secrets.TEAMS_WEBHOOK_URL }}
   HL_API_URL:         ${{ secrets.HL_API_URL }}
   HL_API_KEY:         ${{ secrets.HL_API_KEY }}
   HL_AUTOMATION_ID:   ${{ secrets.HL_AUTOMATION_ID }}
@@ -41,11 +40,7 @@ jobs:
           status=$(curl -o /dev/null -s -w "%{http_code}" "${{ github.event.inputs.post_url }}")
           if [ "$status" -ne 200 ]; then
             echo "Post not live (HTTP $status)"; exit 1
-          fi
-      - name: Notify Teams
-        run: |
-          curl -X POST $TEAMS_WEBHOOK_URL -H 'Content-Type: application/json' \
-            -d '{"text":"✅ Published: ${{ github.event.inputs.post_url }}"}'
+          fi      
       - name: Trigger HighLevel CRM Automation
         run: |
           curl -X POST $HL_API_URL/contacts \
