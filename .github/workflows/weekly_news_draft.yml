@@ -11,7 +11,6 @@ concurrency:
 env:
   OPENAI_API_KEY:     ${{ secrets.OPENAI_API_KEY }}
   NEWSAPI_KEY:        ${{ secrets.NEWSAPI_KEY }}
-  TEAMS_WEBHOOK_URL:  ${{ secrets.TEAMS_WEBHOOK_URL }}
   MODEL_NAME:         ${{ secrets.MODEL_NAME }}
   FALLBACK_THRESHOLD: ${{ secrets.FALLBACK_THRESHOLD }}
   FALLBACK_MODEL:     ${{ secrets.FALLBACK_MODEL }}
